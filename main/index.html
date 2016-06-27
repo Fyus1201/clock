@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes"><!--移动端适配-->
+    <meta name="format-detection" content="telephone=no"/>
+
+    <link rel="stylesheet" type="text/css" href="css/normalize.css"/>
+    <link rel="stylesheet"  type="text/css" href="css/clock.css"/>
+    <style id="clock-animations"></style>
+
+    <title>时钟</title>
+
+</head>
+<body onfocus="backDate();" onblur="closeDate()">
+
+<div  class="clock">
+    <div class="inner"></div>
+    <div class="outer"></div>
+    <div onclick="stopwatch()" id="stopwatchID" class="stopwatch0">
+        <div class="stopwatch01"></div>
+        <div class="stopwatch02">
+            <div class="stopwatch11"></div>
+            <div class="stopwatch12"></div>
+            <div class="stopwatch13"></div>
+            <div class="stopwatch14"></div>
+            <div class="stopwatch15"></div>
+        </div>
+    </div>
+    <div onclick="backwatch()" id="backwatchID" class="backwatch"></div>
+    <div class="indicator">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <div id="pointer-hour" class="pointer hour"></div>
+    <div id="pointer-minute" class="pointer minute"></div>
+    <div id="pointer-second" class="pointer second"></div>
+
+    <div class="center"></div>
+</div>
+
+<div class="time-contianer">
+    <div class="animcont0">
+        <div class="hours time">
+        </div>
+    </div>
+    <div class="space">
+        :
+    </div>
+
+    <div class="animcont">
+        <div class="min0 time">
+        </div>
+    </div>
+    <div class="animcont">
+        <div class="min1 time">
+        </div>
+    </div>
+    <div class="space">
+        :
+    </div>
+
+    <div class="animcont">
+        <div class="sec0 time">
+        </div>
+    </div>
+    <div class="animcont">
+        <div class="sec1 time">
+        </div>
+    </div>
+    <div class="animcont">
+        <div class="sec2 time">
+        </div>
+    </div>
+</div>
+
+<audio id="audio28" >
+    <source src="audio/5728.wav" type="audio/wav">
+    <source src="audio/5728.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    "use strict";//如果浏览器支持的话，则开启ECMAScript 5的严格模式
+
+    var t; //计时
+    var i = 1;//从浏览器标签返回会 抓取焦点2次
+    var pointerHour = document.getElementById("pointer-hour");
+    var pointerMinute = document.getElementById("pointer-minute");
+    var pointersecond = document.getElementById("pointer-second");
+
+    var pointerStop = document.getElementById("stopwatchID");
+    var pointerBack = document.getElementById("backwatchID");
+    var j = false;//判断动画结束
+    var l = false;
+
+    var model = 0;
+
+    var timehours = document.getElementsByClassName("time");
+
+    var audio28 = document.getElementById('audio28');
+    function playOrPaused28(){
+        if(audio28.paused){
+            audio28.play();
+            return;
+        }
+        audio28.pause();
+    }
+
+    var newDate = function()
+    {
+        var now = new Date(),//因为指针旋转中心点的问题，需要修正时间
+                hourDeg   = now.getHours() / 12 * 360 + now.getMinutes() / 60 * 30+180+0.03,
+                minuteDeg = now.getMinutes() / 60 * 360 + now.getSeconds() / 60 * 6+180+2.1,
+                secondDeg = now.getSeconds() / 60 * 360+180+24,
+                stylesDeg = [
+                    "@-webkit-keyframes hour{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+hourDeg+"deg);}}",
+                    "@-webkit-keyframes minute{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+minuteDeg+"deg);}}",
+                    "@-webkit-keyframes second{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+secondDeg+"deg);}}",
+
+                    "@-webkit-keyframes rotate-hour{from{transform:rotate(" + hourDeg + "deg);}to{transform:rotate(" + (hourDeg + 360) + "deg);}}",
+                    "@-webkit-keyframes rotate-minute{from{transform:rotate(" + minuteDeg + "deg);}to{transform:rotate(" + (minuteDeg + 360) + "deg);}}",
+                    "@-webkit-keyframes rotate-second{from{transform:rotate(" + secondDeg + "deg);}to{transform:rotate(" + (secondDeg + 360) + "deg);}}",
+
+                    "@keyframes hour{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+hourDeg+"deg);}}",
+                    "@keyframes minute{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+minuteDeg+"deg);}}",
+                    "@keyframes second{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+secondDeg+"deg);}}",
+
+                    "@keyframes rotate-hour{from{transform:rotate(" + hourDeg + "deg);}to{transform:rotate(" + (hourDeg + 360) + "deg);}}",
+                    "@keyframes rotate-minute{from{transform:rotate(" + minuteDeg + "deg);}to{transform:rotate(" + (minuteDeg + 360) + "deg);}}",
+                    "@keyframes rotate-second{from{transform:rotate(" + secondDeg + "deg);}to{transform:rotate(" + (secondDeg + 360) + "deg);}}"
+                ].join("");
+
+        document.getElementById("clock-animations").innerHTML =stylesDeg;
+    }
+
+    function startTime() {
+        var now=new Date();
+        var hourDeg = now.getHours();
+        var minuteDeg = now.getMinutes();
+        var secondDeg=now.getSeconds();
+
+        timehours[0].innerHTML = checkTime(hourDeg);
+        timehours[1].innerHTML = checkTime0(minuteDeg);
+        timehours[2].innerHTML = checkTime1(minuteDeg);
+        timehours[3].innerHTML = checkTime0(secondDeg);
+        timehours[4].innerHTML = checkTime1(secondDeg);
+        timehours[5].innerHTML = "";
+
+        t = setTimeout('startTime()',500);
+    }
+
+    function stopCount() {
+        clearTimeout(t);
+    }
+
+    function checkTime(i) {
+
+        if(i < 10){
+            i = " 0"+i;
+        }
+
+        return i;
+    }
+    function checkTime0(i) {
+        var nm = Math.floor(i / 10);
+        return nm;
+    }
+    function checkTime1(i) {
+        var nm = i % 10;
+        return nm;
+    }
+
+    var  backDate = function(){
+        if(model === 0){
+            if(i === 0){
+                window.location.href=window.location.href;//重新刷新
+            }
+            i++;
+        }else{
+
+        }
+    }
+
+    var  closeDate = function(){
+        if(model === 0){
+            i = 0;
+        }else{
+
+        }
+    }
+
+    newDate();/*立即执行*/
+    startTime();
+
+    pointerHour.style.webkitAnimation = "hour 3.0s"; // js启动动画
+    pointerMinute.style.webkitAnimation = "minute 3.5s";
+    pointersecond.style.webkitAnimation = "second 4.0s";
+
+    pointerStop.style.webkitAnimation = "setstopwatch 3s";
+    pointerBack.style.webkitAnimation = "setbackwatch 3s";
+
+    pointerHour.addEventListener("webkitAnimationEnd", hourEndFunction);
+    pointerMinute.addEventListener("webkitAnimationEnd", minuteEndFunction);
+    pointersecond.addEventListener("webkitAnimationEnd", secondEndFunction);
+    pointerStop.addEventListener("webkitAnimationEnd", stopEndFunction);
+    pointerBack.addEventListener("webkitAnimationEnd", backEndFunction);
+
+    pointerHour.style.animation = "hour 3.0s"; // js启动动画
+    pointerMinute.style.animation = "minute 3.5s";
+    pointersecond.style.animation = "second 4.0s";
+
+    pointerStop.style.animation = "setstopwatch 3s";
+    pointerBack.style.animation = "setbackwatch 3s";
+
+    pointerHour.addEventListener("animationEnd", hourEndFunction);
+    pointerMinute.addEventListener("animationEnd", minuteEndFunction);
+    pointersecond.addEventListener("animationEnd", secondEndFunction);
+    pointerStop.addEventListener("animationEnd", stopEndFunction);
+    pointerBack.addEventListener("animationEnd", backEndFunction);
+
+    function hourEndFunction() {
+        pointerHour.style.webkitAnimation = "rotate-hour 43200s linear infinite";
+        pointerHour.style.animation = "rotate-hour 43200s linear infinite";
+    }
+    function minuteEndFunction() {
+        pointerMinute.style.webkitAnimation = "rotate-minute 3600s linear infinite";
+        pointerMinute.style.animation = "rotate-minute 3600s linear infinite";
+    }
+    function secondEndFunction() {
+        pointersecond.style.webkitAnimation = "rotate-second 60s linear infinite"; //开启动画
+        pointersecond.style.animation = "rotate-second 60s linear infinite"; //开启动画
+    }
+
+    function stopEndFunction(){
+        pointerStop.style.webkitAnimation = "";
+        pointerStop.style.animation = "";
+        if(j === false){
+            j = true;
+        }
+    }
+    function backEndFunction(){
+        pointerBack.style.webkitAnimation = "";
+        pointerBack.style.animation = "";
+        if(l === false){
+            l = true;
+        }
+    }
+
+    function stopwatch(){//0时间模式，1计时模式，2暂停模式，3准备模式
+        if(j === true){
+            if(model === 0){//准备计时
+                stopCount();
+                pointerHour.style.webkitAnimation ="";
+                pointerMinute.style.webkitAnimation = "";
+                pointersecond.style.webkitAnimation = "";
+                pointerHour.style.animation ="";
+                pointerMinute.style.animation = "";
+                pointersecond.style.animation = "";
+
+                pointerHour.style.webkitAnimation = "stop-rotate steps(360) 3600s infinite";
+                pointerMinute.style.webkitAnimation = "stop-rotate steps(360) 60s infinite";
+                pointersecond.style.webkitAnimation = "stop-rotate steps(360) 1s infinite"; //开启动画
+                pointerHour.style.animation = "stop-rotate steps(360) 3600s infinite";
+                pointerMinute.style.animation = "stop-rotate steps(360) 60s infinite";//linear速度相同(移动端不难暂停)steps(360)等份360
+                pointersecond.style.animation = "stop-rotate steps(360) 1s infinite"; //开启动画
+
+                pointerHour.style.webkitAnimationPlayState="paused";//暂停
+                pointerMinute.style.webkitAnimationPlayState="paused";
+                pointersecond.style.webkitAnimationPlayState="paused";
+                pointerHour.style.animationPlayState="paused";//暂停
+                pointerMinute.style.animationPlayState="paused";
+                pointersecond.style.animationPlayState="paused";
+
+                for(var n = 0;n <= 60;n++) {
+                    if(n === 0){
+                        timehours[0].innerHTML = " 0"+n+"";
+                    }else if(n < 10){
+                        timehours[0].innerHTML += " 0"+n+"";
+                    }else{
+                        timehours[0].innerHTML += " "+n+"";
+                    }
+                }
+                for(var n = 0;n < 6;n++) {
+                    if(n === 0){
+                        timehours[1].innerHTML = " "+n+"";
+                    }else{
+                        timehours[1].innerHTML += " "+n+"";
+                    }
+                }
+                for(var n = 0;n < 10;n++) {
+                    for(var m = 2;m < 6;m++){
+                        if(n === 0){
+                            timehours[m].innerHTML = " "+n+"";
+                        }else{
+                            timehours[m].innerHTML += " "+n+"";
+                        }
+                    }
+                }
+                timehours[0].style.webkitAnimation = "hours1 steps(60) 3600s infinite";
+                timehours[1].style.webkitAnimation = "sec0 steps(6) 60s infinite";
+                timehours[2].style.webkitAnimation = "sec1 steps(10) 10s infinite";
+                timehours[3].style.webkitAnimation = "sec1 steps(10) 1s infinite";
+                timehours[4].style.webkitAnimation = "sec1 steps(10) 0.1s infinite";
+                timehours[5].style.webkitAnimation = "sec1 steps(10) 0.01s infinite";
+                for(var m = 0;m < 6;m++){
+                    timehours[m].style.webkitAnimationPlayState = "paused";
+                }
+                playOrPaused28();
+                model = 3;
+            }else if(model === 1){//暂停计时
+                pointerHour.style.webkitAnimationPlayState="paused";//暂停
+                pointerMinute.style.webkitAnimationPlayState="paused";
+                pointersecond.style.webkitAnimationPlayState="paused";
+                pointerHour.style.animationPlayState="paused";//暂停
+                pointerMinute.style.animationPlayState="paused";
+                pointersecond.style.animationPlayState="paused";
+                for(var m = 0;m < 6;m++){
+                    timehours[m].style.webkitAnimationPlayState = "paused";
+                }
+                model = 2;
+            }else if(model === 2 ||model === 3){//开始计时
+                if(pointerHour.style.webkitAnimation === ""){
+                    pointerHour.style.webkitAnimation = "stop-rotate steps(360) 3600s infinite";
+                    pointerMinute.style.webkitAnimation = "stop-rotate steps(360) 60s infinite";
+                    pointersecond.style.webkitAnimation = "stop-rotate steps(360) 1s infinite"; //开启动画
+                    pointerHour.style.animation = "stop-rotate steps(360) 3600s infinite";
+                    pointerMinute.style.animation = "stop-rotate steps(360) 60s infinite";//linear速度相同(移动端不难暂停)steps(360)等份360
+                    pointersecond.style.animation = "stop-rotate steps(360) 1s infinite"; //开启动画
+
+                    timehours[0].style.webkitAnimation = "hours1 steps(60) 3600s infinite";
+                    timehours[1].style.webkitAnimation = "sec0 steps(6) 60s infinite";
+                    timehours[2].style.webkitAnimation = "sec1 steps(10) 10s infinite";
+                    timehours[3].style.webkitAnimation = "sec1 steps(10) 1s infinite";
+                    timehours[4].style.webkitAnimation = "sec1 steps(10) 0.1s infinite";
+                    timehours[5].style.webkitAnimation = "sec1 steps(10) 0.01s infinite";
+
+                }
+                pointerHour.style.animationPlayState = "running";//启动
+                pointerMinute.style.animationPlayState = "running";
+                pointersecond.style.animationPlayState = "running";
+                pointerHour.style.webkitAnimationPlayState = "running";//启动
+                pointerMinute.style.webkitAnimationPlayState = "running";
+                pointersecond.style.webkitAnimationPlayState = "running";
+
+                for(var m = 0;m < 6;m++){
+                    timehours[m].style.webkitAnimationPlayState = "running";
+                }
+
+                playOrPaused28();
+                model = 1;
+            }
+            pointerStop.style.webkitAnimation = "onstopwatch 0.5s 1";
+            pointerStop.style.animation = "onstopwatch 0.5s 1";
+        }
+    }
+    function backwatch(){
+        if(l === true){
+            if( model === 3){
+                backDate1();
+                startTime();
+                pointerHour.style.webkitAnimationPlayState="running";
+                pointerMinute.style.webkitAnimationPlayState="running";
+                pointersecond.style.webkitAnimationPlayState="running";
+                pointerHour.style.animationPlayState="running";
+                pointerMinute.style.animationPlayState="running";
+                pointersecond.style.animationPlayState="running";
+
+                model = 0;
+            }else if(model === 2){
+                pointerHour.style.webkitAnimation ="";
+                pointerMinute.style.webkitAnimation = "";
+                pointersecond.style.webkitAnimation = "";
+                pointerHour.style.animation ="";
+                pointerMinute.style.animation = "";
+                pointersecond.style.animation = "";
+
+                for(var m = 0;m < 6;m++){
+                    timehours[m].style.animation = "";
+                }
+
+                model = 3;
+            }
+            pointerBack.style.webkitAnimation = "onbackwatch 0.5s 1";
+            pointerBack.style.animation = "onbackwatch 0.5s 1";
+            playOrPaused28();
+        }
+    }
+
+    function backDate1(){
+        var now = new Date(),
+                hourDeg   = now.getHours() / 12 * 360 + now.getMinutes() / 60 * 30+180,
+                minuteDeg = now.getMinutes() / 60 * 360 + now.getSeconds() / 60 * 6+180,
+                secondDeg = now.getSeconds() / 60 * 360+180,
+                stylesDeg = [
+                    "@-webkit-keyframes hour{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+hourDeg+"deg);}}",
+                    "@-webkit-keyframes minute{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+minuteDeg+"deg);}}",
+                    "@-webkit-keyframes second{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+secondDeg+"deg);}}",
+                    "@-webkit-keyframes rotate-hour{from{transform:rotate(" + hourDeg + "deg);}to{transform:rotate(" + (hourDeg + 360) + "deg);}}",
+                    "@-webkit-keyframes rotate-minute{from{transform:rotate(" + minuteDeg + "deg);}to{transform:rotate(" + (minuteDeg + 360) + "deg);}}",
+                    "@-webkit-keyframes rotate-second{from{transform:rotate(" + secondDeg + "deg);}to{transform:rotate(" + (secondDeg + 360) + "deg);}}",
+
+                    "@keyframes hour{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+hourDeg+"deg);}}",
+                    "@keyframes minute{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+minuteDeg+"deg);}}",
+                    "@keyframes second{0% {opacity: 0;}70% {opacity: 0;-webkit-transform: rotate(0deg);}100% {opacity: 1;-webkit-transform: rotate("+secondDeg+"deg);}}",
+                    "@keyframes rotate-hour{from{transform:rotate(" + hourDeg + "deg);}to{transform:rotate(" + (hourDeg + 360) + "deg);}}",
+                    "@keyframes rotate-minute{from{transform:rotate(" + minuteDeg + "deg);}to{transform:rotate(" + (minuteDeg + 360) + "deg);}}",
+                    "@keyframes rotate-second{from{transform:rotate(" + secondDeg + "deg);}to{transform:rotate(" + (secondDeg + 360) + "deg);}}"
+                ].join("");
+
+        document.getElementById("clock-animations").innerHTML =stylesDeg;
+
+        pointerHour.style.webkitAnimation = "rotate-hour 43200s linear infinite";
+        pointerMinute.style.webkitAnimation = "rotate-minute 3600s linear infinite";
+        pointersecond.style.webkitAnimation = "rotate-second 60s linear infinite"; //开启动画
+
+        pointerHour.style.animation = "rotate-hour 43200s linear infinite";
+        pointerMinute.style.animation = "rotate-minute 3600s linear infinite";
+        pointersecond.style.animation = "rotate-second 60s linear infinite"; //开启动画
+    }
+
+</script>
+
+</body>
+</html>
+
+
